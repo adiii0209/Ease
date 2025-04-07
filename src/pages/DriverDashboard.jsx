@@ -70,9 +70,9 @@ const DriverDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Driver Dashboard</h1>
-        <p className="mt-2 text-lg text-gray-600">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Driver Dashboard</h1>
+        <p className="mt-2 text-base text-gray-600">
           Manage your routes and view your schedule
         </p>
       </div>
@@ -87,8 +87,8 @@ const DriverDashboard = () => {
                 alt={`${driver.firstName} ${driver.lastName}`} 
                 className="h-24 w-24 rounded-full object-cover"
               />
-              <h2 className="mt-4 text-xl font-semibold text-gray-900">{driver.firstName} {driver.lastName}</h2>
-              <p className="text-gray-600">{driver.email}</p>
+              <h2 className="mt-4 text-lg font-semibold text-gray-900">{driver.firstName} {driver.lastName}</h2>
+              <p className="text-base text-gray-600">{driver.email}</p>
               <p className="text-sm text-gray-500">Employee ID: {driver.employeeId}</p>
               <p className="text-sm text-gray-500">License: {driver.licenseNumber}</p>
             </div>
@@ -133,7 +133,7 @@ const DriverDashboard = () => {
             <div className="card mb-6 border-2 border-primary-500">
               <div className="border-b border-primary-200 bg-primary-50 p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-primary-800">Active Route</h2>
+                  <h2 className="text-base font-semibold text-primary-800">Active Route</h2>
                   <span className="inline-flex items-center rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-800">
                     In Progress
                   </span>

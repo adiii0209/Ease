@@ -50,9 +50,9 @@ const PassengerDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6 page-transition">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Passenger Dashboard</h1>
-        <p className="mt-2 text-lg text-gray-600">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Passenger Dashboard</h1>
+        <p className="mt-2 text-base text-gray-600">
           Manage your bookings and view your travel history
         </p>
       </div>
@@ -67,8 +67,8 @@ const PassengerDashboard = () => {
                 alt={`${user.firstName} ${user.lastName}`} 
                 className="h-24 w-24 rounded-full object-cover"
               />
-              <h2 className="mt-4 text-xl font-semibold text-gray-900">{user.firstName} {user.lastName}</h2>
-              <p className="text-gray-600">{user.email}</p>
+              <h2 className="mt-4 text-lg font-semibold text-gray-900">{user.firstName} {user.lastName}</h2>
+              <p className="text-base text-gray-600">{user.email}</p>
               <p className="text-sm text-gray-500">Member since {user.memberSince}</p>
             </div>
 
@@ -113,7 +113,7 @@ const PassengerDashboard = () => {
           {/* Upcoming Bookings */}
           <div className="card mb-6">
             <div className="border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">Upcoming Bookings</h2>
+              <h2 className="text-base font-semibold text-gray-900">Upcoming Bookings</h2>
             </div>
             
             {upcomingBookings.length > 0 ? (
@@ -157,7 +157,7 @@ const PassengerDashboard = () => {
             ) : (
               <div className="flex flex-col items-center justify-center p-8">
                 <Ticket className="h-12 w-12 text-gray-300" />
-                <h3 className="mt-2 text-lg font-medium text-gray-900">No upcoming bookings</h3>
+                <h3 className="mt-2 text-base font-medium text-gray-900">No upcoming bookings</h3>
                 <p className="mt-1 text-gray-500">You don't have any upcoming trips scheduled.</p>
                 <Link to="/ticket-booking" className="btn btn-primary mt-4">
                   Book a Trip
@@ -169,7 +169,7 @@ const PassengerDashboard = () => {
           {/* Travel History */}
           <div className="card">
             <div className="border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">Travel History</h2>
+              <h2 className="text-base font-semibold text-gray-900">Travel History</h2>
             </div>
             
             {travelHistory.length > 0 ? (

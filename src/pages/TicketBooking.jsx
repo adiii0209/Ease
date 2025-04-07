@@ -152,9 +152,9 @@ const TicketBooking = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:px-6 page-transition">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Ticket Booking</h1>
-        <p className="mt-2 text-lg text-gray-600">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Ticket Booking</h1>
+        <p className="mt-2 text-base text-gray-600">
           Book your bus tickets in a few simple steps
         </p>
       </div>
@@ -308,7 +308,7 @@ const TicketBooking = () => {
                   </button>
                 </div>
                 
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Fare Details</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Fare Details</h2>
                 
                 <div className="bg-gray-50 rounded-lg p-4 mb-6">
                   <div className="grid grid-cols-2 gap-4">
@@ -350,7 +350,7 @@ const TicketBooking = () => {
                   </div>
                 </div>
                 
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Select Payment Method</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Payment Method</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div 
@@ -418,11 +418,11 @@ const TicketBooking = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Payment Successful!</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Successful!</h2>
                 <p className="text-gray-600 mb-6">Your ticket has been booked successfully.</p>
                 
                 <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-                  <h3 className="font-semibold text-lg mb-4">Booking Details</h3>
+                  <h3 className="font-semibold text-base mb-3">Booking Details</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">Booking Reference</p>

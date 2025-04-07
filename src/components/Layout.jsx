@@ -23,15 +23,11 @@ const Layout = () => {
   return (
     <div className="flex min-h-screen flex-col pb-16">
       <LoadingScreen isLoading={isLoading} />
-      <Navbar />
+      {location.pathname === '/' && <Navbar />}
       <main className="flex-1 page-transition">
         <Outlet />
       </main>
-      <style jsx global>{`
-        button, a {
-          @apply button-click;
-        }
-      `}</style>
+      {/* Global styles moved to CSS file */}
       <BottomNavigation />
     </div>
   )
