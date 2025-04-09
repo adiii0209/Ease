@@ -162,6 +162,7 @@ const BusDetails = () => {
                 </button>
                 <Link
                   to={`/ticket-booking?from=${encodeURIComponent(bus.currentLocation)}&to=${encodeURIComponent(bus.nextStop)}&busId=${encodeURIComponent(bus.busId)}`}
+                  state={{ from: 'bus-details' }}
                   className="btn btn-primary px-4 py-2 text-xs flex items-center justify-center w-full sm:w-auto whitespace-nowrap hover:bg-primary-700 transition-colors"
                 >
                   <Ticket className="mr-2 h-4 w-4" />

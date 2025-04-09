@@ -18,6 +18,7 @@ const BusTracking = () => {
   const [locationPermission, setLocationPermission] = useState('prompt') // 'prompt', 'granted', 'denied'
   const [nearbyRadius, setNearbyRadius] = useState(5) // Default 5km radius
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
+  const [locationError, setLocationError] = useState(null)
   
   // Function to calculate distance between two coordinates using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -37,42 +38,50 @@ const BusTracking = () => {
     setBuses(busService.getAllBuses())
   }, [])
   
-  // Request location permission and get user location when component mounts
-  useEffect(() => {
-    const requestLocationPermission = async () => {
-      if (!navigator.geolocation) {
-        setLocationPermission('unsupported')
-        return
-      }
-      
-      setIsLoadingLocation(true)
-      
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          })
-        })
-        
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        })
-        setLocationPermission('granted')
-      } catch (error) {
-        console.error('Error getting location:', error)
-        if (error.code === 1) { // Permission denied
-          setLocationPermission('denied')
-        } else {
-          setLocationPermission('error')
-        }
-      } finally {
-        setIsLoadingLocation(false)
-      }
+  // Function to request location permission and get user location
+  const requestLocationPermission = async () => {
+    if (!navigator.geolocation) {
+      setLocationPermission('unsupported')
+      setLocationError('Geolocation is not supported by your browser')
+      return
     }
     
+    setIsLoadingLocation(true)
+    setLocationError(null)
+    
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        })
+      })
+      
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      })
+      setLocationPermission('granted')
+    } catch (error) {
+      console.error('Error getting location:', error)
+      if (error.code === 1) { // Permission denied
+        setLocationPermission('denied')
+        setLocationError('Location access was denied. Please enable location services to see nearby buses.')
+      } else if (error.code === 2) { // Position unavailable
+        setLocationPermission('error')
+        setLocationError('Unable to determine your location. Please check your device settings.')
+      } else { // Timeout
+        setLocationPermission('error')
+        setLocationError('Location request timed out. Please try again.')
+      }
+    } finally {
+      setIsLoadingLocation(false)
+    }
+  }
+  
+  // Request location permission when component mounts
+  useEffect(() => {
     requestLocationPermission()
     
     // Set up location tracking with watchPosition
@@ -258,22 +267,29 @@ const BusTracking = () => {
             </p>
           
             {/* Location Status Banner */}
-            {locationPermission === 'denied' && (
+            {(locationPermission === 'denied' || locationPermission === 'error') && (
               <div className="mt-4 flex items-center rounded-lg bg-yellow-50 p-4 text-yellow-800 border border-yellow-200 animate-slide-up transition-all hover-lift">
                 <AlertCircle className="h-5 w-5 mr-2" />
-                <div>
-                  <p className="font-medium">Location access denied</p>
-                  <p className="text-sm">Please enable location access in your browser settings to see nearby buses.</p>
-                </div>
-              </div>
-            )}
-            
-            {locationPermission === 'error' && (
-              <div className="mt-4 flex items-center rounded-lg bg-red-50 p-4 text-red-800 border border-red-200 animate-slide-up transition-all hover-lift">
-                <AlertCircle className="h-5 w-5 mr-2" />
-                <div>
-                  <p className="font-medium">Error getting location</p>
-                  <p className="text-sm">There was a problem accessing your location. Please try again.</p>
+                <div className="flex-1">
+                  <p className="font-medium">{locationPermission === 'denied' ? 'Location access denied' : 'Location error'}</p>
+                  <p className="text-sm">{locationError}</p>
+                  <button
+                    onClick={requestLocationPermission}
+                    disabled={isLoadingLocation}
+                    className="mt-2 inline-flex items-center px-3 py-1.5 border border-yellow-600 text-xs font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoadingLocation ? (
+                      <>
+                        <Navigation className="h-4 w-4 mr-1.5 animate-spin" />
+                        Requesting Location...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="h-4 w-4 mr-1.5" />
+                        Try Again
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -295,8 +311,8 @@ const BusTracking = () => {
               </div>
               <input
                 type="text"
-                className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-all hover-lift cursor-pointer"
-                placeholder="Search by route number, name or stop"
+                className="w-full rounded-full border border-gray-200 bg-white py-3.5 pl-10 pr-4 text-gray-900 shadow-sm transition-all duration-300 ease-in-out hover:border-primary-400 hover:shadow-md focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 cursor-pointer"
+                placeholder="Find and track your bus"
                 value={searchQuery}
                 readOnly
                 onClick={() => setIsSearchModalOpen(true)}
@@ -305,27 +321,25 @@ const BusTracking = () => {
             
             {/* Radius Selector - Only show when location is available */}
             {userLocation && (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Navigation className="h-5 w-5 text-primary-600" />
-                  <span className="text-sm font-medium text-gray-700">Nearby radius:</span>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <Navigation className="h-4 w-4 text-primary-600" />
+                  <span className="text-gray-700">Nearby radius:</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <select
-                    className="rounded-lg border border-gray-300 py-2 px-3 text-gray-700 focus:border-primary-500 focus:ring-primary-500"
-                    value={nearbyRadius}
-                    onChange={(e) => setNearbyRadius(Number(e.target.value))}
-                  >
-                    <option value="1">1 km</option>
-                    <option value="2">2 km</option>
-                    <option value="5">5 km</option>
-                    <option value="10">10 km</option>
-                    <option value="20">20 km</option>
-                  </select>
-                  <span className="text-sm text-gray-500">
-                    {filteredBuses.length} buses found ({nearbyBuses.length} nearby)
-                  </span>
-                </div>
+                <select
+                  className="rounded-lg border border-gray-300 py-1 px-2 text-gray-700 focus:border-primary-500 focus:ring-primary-500"
+                  value={nearbyRadius}
+                  onChange={(e) => setNearbyRadius(Number(e.target.value))}
+                >
+                  <option value="1">1 km</option>
+                  <option value="2">2 km</option>
+                  <option value="5">5 km</option>
+                  <option value="10">10 km</option>
+                  <option value="20">20 km</option>
+                </select>
+                <span className="text-gray-500">
+                  {filteredBuses.length} buses found ({nearbyBuses.length} nearby)
+                </span>
               </div>
             )}
           </div>

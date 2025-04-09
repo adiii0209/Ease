@@ -1,52 +1,97 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { Users, CreditCard, Wallet, DollarSign, ChevronLeft, Bus, MapPin, Clock } from 'lucide-react'
 import busData from '../../buses.js'
 
 const TicketBooking = () => {
-  // Add smooth transitions for form elements
-  const formTransitionClass = 'transition-all duration-300 ease-in-out transform hover:scale-[1.02] focus:scale-[1.02]'
+  // Add click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const pickupDropdown = document.getElementById('pickup-dropdown');
+      const destinationDropdown = document.getElementById('destination-dropdown');
+      
+      if (pickupDropdown && !event.target.closest('.relative')) {
+        pickupDropdown.style.display = 'none';
+      }
+      
+      if (destinationDropdown && !event.target.closest('.relative')) {
+        destinationDropdown.style.display = 'none';
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const [selectedBus, setSelectedBus] = useState('')
   const [selectedPickup, setSelectedPickup] = useState('')
   const [selectedDestination, setSelectedDestination] = useState('')
-  const [selectedTiming, setSelectedTiming] = useState('')
   const [passengerCount, setPassengerCount] = useState(1)
   const [availableBuses, setAvailableBuses] = useState([])
   const [availableStops, setAvailableStops] = useState([])
-  const [availableTimings, setAvailableTimings] = useState([])
-  
-  // New state variables for fare calculation and payment
   const [showFareDetails, setShowFareDetails] = useState(false)
   const [calculatedFare, setCalculatedFare] = useState(0)
   const [totalFare, setTotalFare] = useState(0)
+  const [selectedTiming, setSelectedTiming] = useState('')
+  const [availableTimings, setAvailableTimings] = useState([])
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
   const [paymentProcessing, setPaymentProcessing] = useState(false)
   const [paymentSuccess, setPaymentSuccess] = useState(false)
 
   // Get URL parameters
   const location = useLocation()
+  const [searchResults, setSearchResults] = useState([])
+  const [searchError, setSearchError] = useState('')
   
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
   
-  // Load available buses on component mount and check for URL parameters
+  // Load available buses on component mount
   useEffect(() => {
     setAvailableBuses(busData)
-    
-    // Get parameters from URL
+  }, [])
+
+  // Handle URL parameters with auto-selecting
+  useEffect(() => {
     const params = new URLSearchParams(location.search)
     const busId = params.get('busId')
     
     if (busId) {
-      // Automatically select the bus if it exists
-      const busExists = busData.some(bus => bus.busId === busId)
-      if (busExists) {
+      const bus = busData.find(b => b.busId === busId)
+      if (bus) {
         setSelectedBus(busId)
+        setAvailableStops(bus.stops)
+        setAvailableTimings(bus.timings)
       }
     }
   }, [location.search])
+
+  // Handle bus search and selection
+  const handleBusSearch = (query) => {
+    setSelectedBus(query)
+    if (!query) {
+      setSearchResults([])
+      setSearchError('')
+      return
+    }
+
+    const results = busData.filter(bus => 
+      bus.busId.toLowerCase().includes(query.toLowerCase()) ||
+      bus.route.toLowerCase().includes(query.toLowerCase())
+    )
+
+    if (results.length === 0) {
+      setSearchError('No buses found matching your search')
+    } else {
+      setSearchError('')
+    }
+
+    setSearchResults(results)
+  }
 
   // Update available stops when bus is selected
   useEffect(() => {
@@ -56,13 +101,16 @@ const TicketBooking = () => {
         setAvailableStops(bus.stops)
         setAvailableTimings(bus.timings)
         
-        // Reset selection fields when bus changes
-        setSelectedPickup('')
-        setSelectedDestination('')        
-        setSelectedTiming('')
+        // Only reset if no URL parameters are present
+        const params = new URLSearchParams(location.search)
+        if (!params.get('from') && !params.get('to')) {
+          setSelectedPickup('')
+          setSelectedDestination('')        
+          setSelectedTiming('')
+        }
       }
     }
-  }, [selectedBus])
+  }, [selectedBus, location.search])
   
   // Reset destination when pickup is selected, but only if destination is invalid
   useEffect(() => {
@@ -151,93 +199,169 @@ const TicketBooking = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:px-6 page-transition">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Ticket Booking</h1>
-        <p className="mt-2 text-base text-gray-600">
-          Book your bus tickets in a few simple steps
-        </p>
+    <div className="container mx-auto px-4 py-4 page-transition">
+      <div className="flex items-center mb-6">
+        {location.state?.from === 'bus-details' && (
+          <Link to={-1} className="mr-4">
+            <ChevronLeft className="h-6 w-6 text-gray-600" />
+          </Link>
+        )}
+        <h1 className="text-xl font-semibold text-gray-900">Buy Bus Tickets</h1>
       </div>
 
-      <div className="card p-6 bg-white shadow-lg rounded-xl">
+      <div className="space-y-6">
         {!showFareDetails ? (
-          <form className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 transition-all hover:shadow-md">
-              {/* Bus Selection */}
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Bus className="h-5 w-5 text-gray-400" />
+          <form>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Route/Bus No</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500"
+                    placeholder="Search by bus number or route"
+                    value={selectedBus}
+                    onChange={(e) => handleBusSearch(e.target.value)}
+                  />
+                  {searchResults.length > 0 && selectedBus && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                      {searchResults.map((bus) => (
+                        <button
+                          key={bus.busId}
+                          className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                          onClick={() => {
+                            setSelectedBus(bus.busId)
+                            setSearchResults([])
+                          }}
+                        >
+                          <div className="font-medium">{bus.busId}</div>
+                          <div className="text-sm text-gray-500">{bus.route}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchError && (
+                    <p className="mt-2 text-sm text-red-600">{searchError}</p>
+                  )}
                 </div>
-                <select
-                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-colors ${formTransitionClass}"
-                  value={selectedBus}
-                  onChange={(e) => setSelectedBus(e.target.value)}
-                >
-                  <option value="">Select a bus</option>
-                  {availableBuses.map((bus) => (
-                    <option key={bus.busId} value={bus.busId}>
-                      {bus.busId} - {bus.route}
-                    </option>
-                  ))}
-                </select>
               </div>
 
-              {/* Journey Details - Only show when bus is selected */}
-              {selectedBus && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Pickup Stop Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Pickup and Destination Stop</label>
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <select
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-colors ${formTransitionClass}"
-                      value={selectedPickup}
-                      onChange={(e) => setSelectedPickup(e.target.value)}
-                    >
-                      <option value="">Select pickup stop</option>
-                      {availableStops.map((stop, index) => (
-                        <option key={index} value={stop}>
-                          {stop}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Destination Stop Selection */}
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <select
-                      className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-colors ${formTransitionClass}"
-                      value={selectedDestination}
-                      onChange={(e) => setSelectedDestination(e.target.value)}
-                      disabled={!selectedPickup}
-                    >
-                      <option value="">Select destination stop</option>
-                      {availableStops
-                        .filter((stop) => {
-                          const pickupIndex = availableStops.indexOf(selectedPickup);
-                          const currentIndex = availableStops.indexOf(stop);
-                          return currentIndex > pickupIndex;
-                        })
-                        .map((stop, index) => (
-                          <option key={index} value={stop}>
-                            {stop}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  {/* Timing Selection */}
-                  {selectedDestination && (
-                    <div className="relative md:col-span-2">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Clock className="h-5 w-5 text-gray-400" />
+                    {/* Pickup Stop */}
+                    <div className="flex items-center mb-4">
+                      <div className="h-6 w-6 rounded-full bg-green-100 flex items-center justify-center">
+                        <div className="h-3 w-3 rounded-full bg-green-500" />
                       </div>
+                      <div className="flex-1">
+                        <div className="relative w-full">
+                      <input
+                        type="text"
+                        className="w-full ml-3 pl-3 pr-8 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 cursor-pointer"
+                        placeholder="Select pickup point"
+                        value={selectedPickup}
+                        readOnly
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const element = document.getElementById('pickup-dropdown');
+                          if (element) {
+                            element.style.display = 'block';
+                          }
+                        }}
+                      />
+                      {availableStops.length > 0 && (
+                        <div
+                          id="pickup-dropdown"
+                          className="absolute z-10 w-full mt-1 ml-3 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          style={{ display: 'none' }}
+                        >
+                          {availableStops.map((stop, index) => (
+                            <button
+                              type="button"
+                              key={index}
+                              className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setSelectedPickup(stop);
+                                setSelectedDestination('');
+                                document.getElementById('pickup-dropdown').style.display = 'none';
+                              }}
+                            >
+                              {stop}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                      </div>
+                    </div>
+
+                    {/* Vertical Line */}
+                    <div className="absolute left-3 top-10 bottom-10 w-[1px] bg-gray-300" />
+
+                    {/* Destination Stop */}
+                    <div className="flex items-center">
+                      <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                        <div className="h-3 w-3 rounded-full bg-red-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="relative w-full">
+                      <input
+                        type="text"
+                        className="w-full ml-3 pl-3 pr-8 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Select destination"
+                        value={selectedDestination}
+                        readOnly
+                        disabled={!selectedPickup}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (!selectedPickup) return;
+                          const element = document.getElementById('destination-dropdown');
+                          if (element) {
+                            element.style.display = 'block';
+                          }
+                        }}
+                      />
+                      {selectedPickup && availableStops.length > 0 && (
+                        <div
+                          id="destination-dropdown"
+                          className="absolute z-10 w-full mt-1 ml-3 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                          style={{ display: 'none' }}
+                        >
+                          {availableStops
+                            .filter((stop, index) => index > availableStops.indexOf(selectedPickup))
+                            .map((stop, index) => (
+                              <button
+                                type="button"
+                                key={index}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedDestination(stop);
+                                  document.getElementById('destination-dropdown').style.display = 'none';
+                                }}
+                              >
+                                {stop}
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Timing Selection - Only show after stops are selected */}
+                {selectedPickup && selectedDestination && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Departure Time</label>
+                    <div className="flex items-center">
+                      <Clock className="h-5 w-5 text-gray-400 mr-2" />
                       <select
-                        className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-colors ${formTransitionClass}"
+                        className="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-900 focus:border-primary-500 focus:ring-primary-500 transition-colors"
                         value={selectedTiming}
                         onChange={(e) => setSelectedTiming(e.target.value)}
                       >
@@ -249,51 +373,65 @@ const TicketBooking = () => {
                         ))}
                       </select>
                     </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-          {/* Passenger Count - Always show */}
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 transition-all hover:shadow-md">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Users className="h-5 w-5 text-gray-400 mr-2" />
-                <span className="text-gray-700">Number of Passengers</span>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center bg-white rounded-lg border border-gray-200 overflow-hidden">
-                  <button 
-                    type="button"
-                    className="px-3 py-2 hover:bg-gray-50 transition-colors text-gray-600 font-medium"
-                    onClick={() => setPassengerCount(prev => Math.max(prev - 1, 1))}
-                    disabled={passengerCount <= 1}
-                  >
-                    −
-                  </button>
-                  <div className="w-12 text-center font-medium text-gray-900">{passengerCount}</div>
-                  <button 
-                    type="button"
-                    className="px-3 py-2 hover:bg-gray-50 transition-colors text-gray-600 font-medium"
-                    onClick={() => setPassengerCount(prev => Math.min(prev + 1, 10))}
-                  >
-                    +
-                  </button>
-                </div>
-                <span className="text-sm text-gray-500">(Max: 10)</span>
-              </div>
-            </div>
-          </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary w-full"
-            disabled={!selectedBus || !selectedPickup || !selectedDestination || !selectedTiming}
-            onClick={handleContinueBooking}
-          >
-            Continue Booking
-          </button>
-        </form>
+              {/* Passenger Count - Always show */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">No of Passengers</label>
+                <div className="flex items-center justify-between bg-white rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 text-gray-400 mr-2" />
+                    <span className="text-gray-900">{passengerCount} Passenger{passengerCount > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <button 
+                      type="button"
+                      className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                      onClick={() => setPassengerCount(prev => Math.max(prev - 1, 1))}
+                      disabled={passengerCount <= 1}
+                    >
+                      −
+                    </button>
+                    <button 
+                      type="button"
+                      className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                      onClick={() => setPassengerCount(prev => Math.min(prev + 1, 10))}
+                      disabled={passengerCount >= 10}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">Maximum 10 tickets are allowed per user.</p>
+              </div>
+
+              <div className="bg-gray-150 p-4 rounded-lg space-y-2 border border-gray-200">
+                <div className="flex items-start space-x-2">
+                  <span className="text-gray-400">•</span>
+                  <p className="text-gray-600">Cancellation of tickets is not applicable</p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-gray-400">•</span>
+                  <p className="text-gray-600">The ticket is valid for only 30 minutes from the time of booking</p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <span className="text-gray-400">•</span>
+                  <p className="text-gray-600">Fare is commission-free and determined by the WBTC</p>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleContinueBooking}
+                disabled={!selectedBus || !selectedPickup || !selectedDestination || !selectedTiming}
+              >
+                Get Fare
+              </button>
+            </div>
+          </form>
         ) : (
           <div>
             {!paymentSuccess ? (

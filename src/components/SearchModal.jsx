@@ -201,26 +201,26 @@ const SearchModal = ({ isOpen, onClose, onSearch, initialQuery = '' }) => {
               <>
                 {/* Recent Searches */}
                 {recentSearches.length > 0 && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-3">Recent Searches</h3>
-                    <div className="space-y-2">
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium mb-2">Recent Searches</h3>
+                    <div className="space-y-1.5">
                       {recentSearches.map((search, index) => (
                         <motion.div
                           key={index}
-                          className="p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center"
+                          className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center"
                           onClick={() => handleSearchItemClick(search)}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.2, delay: index * 0.05 }}
                         >
-                          <Clock className="h-5 w-5 text-gray-400 mr-3" />
-                          <span className="text-gray-700 flex-1">
+                          <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                          <span className="text-sm text-gray-700 flex-1">
                             {search.busId ? `${search.busId} - ${search.route}` : search.query}
                             {search.busId && (
-                              <div className="flex items-center text-sm text-gray-500 mt-1">
-                                <MapPin className="h-3 w-3 mr-1" />
+                              <div className="flex items-center text-xs text-gray-500 mt-0.5">
+                                <MapPin className="h-2.5 w-2.5 mr-1" />
                                 <span>{search.stops[0]}</span>
-                                <ArrowRight className="h-3 w-3 mx-1" />
+                                <ArrowRight className="h-2.5 w-2.5 mx-1" />
                                 <span>{search.stops[search.stops.length - 1]}</span>
                               </div>
                             )}
@@ -232,9 +232,9 @@ const SearchModal = ({ isOpen, onClose, onSearch, initialQuery = '' }) => {
                               setRecentSearches(updatedSearches);
                               localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
                             }}
-                            className="p-1.5 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
+                            className="p-1 text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </motion.div>
                       ))}
