@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet'
-import { divIcon, icon } from 'leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, Polyline } from 'react-leaflet'
+import { divIcon } from 'leaflet'
+import { Link } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import './Map.css'
 import busIcon from '../assets/bus-marker.svg'
 
@@ -10,7 +12,10 @@ const LocationUpdater = ({ center, zoom }) => {
   
   useEffect(() => {
     if (center) {
-      map.setView(center, zoom)
+      map.flyTo(center, zoom, {
+        duration: 1,
+        animate: true
+      })
     }
   }, [center, zoom, map])
   
@@ -24,32 +29,49 @@ const BusMap = ({
   onBusSelect,
   nearbyRadius = 5 // in km
 }) => {
+  // Function to create route coordinates from stops
+  const createRouteCoordinates = (bus) => {
+    if (!bus || !bus.stops) return [];
+    
+    // Generate coordinates for each stop (simulated for demo)
+    // In a real app, these would come from your backend
+    return bus.stops.map((stop, index) => {
+      const baseCoords = bus.coordinates || { lat: 22.5726, lng: 88.3639 };
+      // Create a path by slightly offsetting from the bus location
+      return [
+        baseCoords.lat + (index - bus.stops.length/2) * 0.005,
+        baseCoords.lng + (index - bus.stops.length/2) * 0.005
+      ];
+    });
+  };
+
+  // Create custom icon for stops
+  const createStopIcon = (isPickup) => {
+    return divIcon({
+      className: '',
+      html: `
+        <div class="${isPickup ? 'pickup-marker' : 'destination-marker'}">
+          <div class="marker-dot"></div>
+          <div class="marker-pulse"></div>
+        </div>
+      `,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+  };
   const [mapCenter, setMapCenter] = useState([22.5726, 88.3639]) // Default center (Kolkata)
   const [mapZoom, setMapZoom] = useState(12)
   
-  // Update map center when user location changes
+  // Update map center based on user location or selected bus
   useEffect(() => {
-    if (userLocation) {
+    if (selectedBus?.coordinates) {
+      setMapCenter([selectedBus.coordinates.lat, selectedBus.coordinates.lng])
+      setMapZoom(14)
+    } else if (userLocation) {
       setMapCenter([userLocation.lat, userLocation.lng])
       setMapZoom(13)
     }
-  }, [userLocation])
-  
-  // Update map center when a bus is selected
-  useEffect(() => {
-    if (selectedBus && selectedBus.coordinates) {
-      setMapCenter([selectedBus.coordinates.lat, selectedBus.coordinates.lng])
-      setMapZoom(14)
-    }
-  }, [selectedBus])
-  
-  // Force center update when component mounts if a bus is already selected
-  useEffect(() => {
-    if (selectedBus && selectedBus.coordinates) {
-      setMapCenter([selectedBus.coordinates.lat, selectedBus.coordinates.lng])
-      setMapZoom(14)
-    }
-  }, [])
+  }, [selectedBus, userLocation])
   
   // Create custom icon for buses
   const createBusIcon = (bus) => {
@@ -71,12 +93,55 @@ const BusMap = ({
   }
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden">
+    <div className="flex flex-col w-full h-full relative">
+      {/* Back Button */}
+      <Link to="/bus-tracking" className="absolute top-4 left-4 z-[1000] bg-white p-2 rounded-lg shadow-md hover:bg-gray-50 transition-colors">
+        <ArrowLeft className="h-5 w-5 text-gray-700" />
+      </Link>
       <MapContainer 
-        center={mapCenter} 
-        zoom={mapZoom} 
-        style={{ height: '100%', width: '100%' }}
+        center={selectedBus?.coordinates ? [selectedBus.coordinates.lat, selectedBus.coordinates.lng] : mapCenter} 
+        zoom={selectedBus ? 14 : mapZoom} 
+        className="w-full h-full"
       >
+        {/* Add custom styles for markers */}
+        <style jsx>{`
+          .pickup-marker, .destination-marker {
+            position: relative;
+            width: 20px;
+            height: 20px;
+          }
+          .marker-dot {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            top: 4px;
+            left: 4px;
+          }
+          .pickup-marker .marker-dot {
+            background: #22c55e;
+          }
+          .destination-marker .marker-dot {
+            background: #ef4444;
+          }
+          .marker-pulse {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+          }
+          .pickup-marker .marker-pulse {
+            border: 2px solid #22c55e;
+          }
+          .destination-marker .marker-pulse {
+            border: 2px solid #ef4444;
+          }
+          @keyframes pulse {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+          }
+        `}</style>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -108,6 +173,46 @@ const BusMap = ({
           </>
         )}
         
+        {/* Route polylines and stop markers */}
+        {selectedBus && (
+          <>
+            <Polyline
+              positions={createRouteCoordinates(selectedBus)}
+              color="#000000"
+              weight={3}
+              opacity={0.9}
+            />
+            {/* Pickup marker (first stop) */}
+            {selectedBus.stops && selectedBus.stops.length > 0 && (
+              <Marker
+                position={createRouteCoordinates(selectedBus)[0]}
+                icon={createStopIcon(true)}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-medium text-green-600">Pickup Point</p>
+                    <p>{selectedBus.stops[0]}</p>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+            {/* Destination marker (last stop) */}
+            {selectedBus.stops && selectedBus.stops.length > 0 && (
+              <Marker
+                position={createRouteCoordinates(selectedBus)[selectedBus.stops.length - 1]}
+                icon={createStopIcon(false)}
+              >
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-medium text-red-600">Destination</p>
+                    <p>{selectedBus.stops[selectedBus.stops.length - 1]}</p>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+          </>
+        )}
+
         {/* Bus markers */}
         {buses.map(bus => (
           <Marker 
@@ -132,6 +237,12 @@ const BusMap = ({
           </Marker>
         ))}
       </MapContainer>
+      {selectedBus && (
+        <div className="text-center py-4 bg-white border-b border-gray-200">
+          <h2 className="text-xl font-semibold">Bus No: {selectedBus.routeNumber}</h2>
+          <p className="text-gray-600">Towards {selectedBus.stops[selectedBus.stops.length - 1]}</p>
+        </div>
+      )}
     </div>
   )
 }

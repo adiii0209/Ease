@@ -105,34 +105,23 @@ const BusDetails = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:px-6 animate-fade-in">
-      {/* Back Button */}
-      <Link to="/bus-tracking" className="mb-6 inline-flex items-center text-gray-600 hover:text-primary-600">
-        <ArrowLeft className="mr-2 h-5 w-5" />
-        Back to Bus Tracking
-      </Link>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Map */}
-        <div className="lg:col-span-1">
-          <div className="h-96 rounded-lg shadow-sm overflow-hidden">
-            <BusMap
-              userLocation={userLocation}
-              buses={[bus]}
-              selectedBus={bus}
-              nearbyRadius={3}
-              onBusSelect={() => {}} // Add empty handler to ensure map centers on bus
-            />
-          </div>
+    <div className="animate-fade-in h-screen overflow-hidden">
+      <div className="flex flex-col h-full">
+        {/* Map - Takes all available space above details */}
+        <div className="relative h-[50vh] w-full">
+          <BusMap
+            userLocation={userLocation}
+            buses={[bus]}
+            selectedBus={bus}
+            nearbyRadius={3}
+            onBusSelect={() => {}} // Add empty handler to ensure map centers on bus
+          />
         </div>
 
         {/* Bus Details */}
-        <div className="lg:col-span-1">
+        <div className="flex-1 overflow-y-auto">
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">  
-              <h1 className="text-xl font-bold text-gray-900">
-                Bus {bus.routeNumber} - {bus.routeName}
-              </h1>
               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                 <button 
                   onClick={() => {
