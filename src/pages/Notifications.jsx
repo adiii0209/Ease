@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Bell, CheckCircle, AlertTriangle, Info, Clock, X } from 'lucide-react'
+import { Bell, CheckCircle, AlertTriangle, Info, Clock, X, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([
@@ -87,22 +88,37 @@ const Notifications = () => {
 
   const unreadCount = notifications.filter(notification => !notification.isRead).length
 
+  const navigate = useNavigate()
+
   return (
-    <div className="container mx-auto px-4 py-8 md:px-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Stay updated with important information about your bus services.
-        </p>
+    <div className="animate-fade-in min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-3 md:px-6 transition-all duration-300 ease-in-out">
+        <div className="mb-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            </button>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
+              <p className="text-xs text-gray-600">
+                Stay updated with important information about your bus services.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-200 p-4">
           <div className="flex items-center space-x-2">
-            <Bell className="h-5 w-5 text-primary-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Your Notifications</h2>
+            <Bell className="h-4 w-4 text-primary-600" />
+            <h2 className="text-base font-semibold text-gray-900">Your Notifications</h2>
             {unreadCount > 0 && (
-              <span className="rounded-full bg-primary-100 px-2.5 py-0.5 text-xs font-medium text-primary-800">
+              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-800">
                 {unreadCount} new
               </span>
             )}
@@ -123,17 +139,17 @@ const Notifications = () => {
             {notifications.map((notification) => (
               <div 
                 key={notification.id} 
-                className={`flex items-start p-4 ${getNotificationBgColor(notification.type, notification.isRead)}`}
+                className={`flex items-start p-3 transform transition-all duration-300 ease-in-out hover:bg-gray-50 ${getNotificationBgColor(notification.type, notification.isRead)}`}
               >
                 <div className="mr-4 mt-1">
                   {getNotificationIcon(notification.type)}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium text-gray-900">{notification.title}</h3>
-                      <p className="mt-1 text-sm text-gray-600">{notification.message}</p>
-                      <div className="mt-2 flex items-center text-xs text-gray-500">
+                      <h3 className="text-sm font-medium text-gray-900">{notification.title}</h3>
+                      <p className="mt-0.5 text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                      <div className="mt-1.5 flex items-center text-xs text-gray-500">
                         <Clock className="mr-1 h-3 w-3" />
                         <span>{notification.time}</span>
                       </div>
@@ -163,9 +179,9 @@ const Notifications = () => {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12">
-            <Bell className="h-12 w-12 text-gray-300" />
-            <h3 className="mt-4 text-lg font-medium text-gray-900">No notifications</h3>
-            <p className="mt-1 text-gray-500">You're all caught up! Check back later for updates.</p>
+            <Bell className="h-10 w-10 text-gray-300" />
+            <h3 className="mt-3 text-base font-medium text-gray-900">No notifications</h3>
+            <p className="mt-1 text-sm text-gray-500">You're all caught up! Check back later for updates.</p>
           </div>
         )}
       </div>

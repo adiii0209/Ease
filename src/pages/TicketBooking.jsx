@@ -191,7 +191,60 @@ const TicketBooking = () => {
       </div>
 
       <div className="space-y-6">
-        {!showFareDetails ? (
+        {paymentSuccess ? (
+        <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Booking Confirmed!</h2>
+          <p className="text-gray-600 mb-8">Your ticket has been booked successfully</p>
+          
+          <div className="w-full max-w-md bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Bus Number</p>
+                <p className="font-medium">{selectedBus}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Date & Time</p>
+                <p className="font-medium">{selectedTiming}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">From</p>
+                <p className="font-medium">{selectedPickup}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">To</p>
+                <p className="font-medium">{selectedDestination}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Passengers</p>
+                <p className="font-medium">{passengerCount}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Total Amount</p>
+                <p className="font-medium text-primary-600">₹{totalFare.toFixed(2)}</p>
+              </div>
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500">Booking Reference</p>
+              <p className="text-lg font-semibold text-gray-900">EB{Math.floor(100000 + Math.random() * 900000)}</p>
+            </div>
+          </div>
+          
+          <div className="space-x-4">
+            <Link to="/passenger-dashboard" className="btn btn-primary">
+              View My Bookings
+            </Link>
+            <Link to="/" className="btn btn-secondary">
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      ) : !showFareDetails ? (
           <form className="flex flex-col min-h-[calc(100vh-8rem)]">
             <div className="flex-1 space-y-6">
               <div>
